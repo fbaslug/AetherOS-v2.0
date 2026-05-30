@@ -14,6 +14,7 @@ del kernel para validar la integración completa:
 
 from __future__ import annotations
 
+import argparse
 import json
 import platform
 import sys
@@ -364,19 +365,11 @@ def demo_estado_sistema(sistema: SistemaAetherOS) -> None:
         print(f"  ✗ Error: {resultado['mensaje']}")
 
 
-def main() -> None:
-    """Punto de entrada principal de la demostración."""
+def ejecutar_demo_cli(sistema: SistemaAetherOS) -> None:
+    """Ejecuta la demo original en modo texto."""
     print("\n" + "╔" + "═"*58 + "╗")
     print("║" + " AetherOS v2.0 — Demo de Integración".center(58) + "║")
     print("╚" + "═"*58 + "╝")
-
-    # Inicializar sistema
-    sistema = SistemaAetherOS(
-        quantum=4,
-        max_procesos=256,
-        memoria_total=1024,
-        tamaño_pagina=64,
-    )
 
     resultado = sistema.iniciar()
     print(f"\n  ✓ {resultado['mensaje']}")
@@ -407,6 +400,34 @@ def main() -> None:
     print("\n" + "╔" + "═"*58 + "╗")
     print("║" + " Demo completada exitosamente".center(58) + "║")
     print("╚" + "═"*58 + "╝\n")
+
+
+def main() -> None:
+    """Punto de entrada principal."""
+    parser = argparse.ArgumentParser(description="AetherOS v2.0")
+    parser.add_argument("--demo", action="store_true", help="Ejecuta la demo en texto (CLI)")
+    args = parser.parse_args()
+
+    # Inicializar sistema subyacente
+    sistema = SistemaAetherOS(
+        quantum=4,
+        max_procesos=256,
+        memoria_total=1024,
+        tamaño_pagina=64,
+    )
+
+    if args.demo:
+        ejecutar_demo_cli(sistema)
+    else:
+        try:
+            # Intenta importar y lanzar la GUI
+            import tkinter as tk
+            from gui.app import lanzar_gui
+            lanzar_gui(sistema)
+        except ImportError:
+            print("Error: No se pudo importar 'tkinter'. Ejecuta instalacion.sh para instalar python3-tk.")
+            print("Fallback a la demo en modo texto...\n")
+            ejecutar_demo_cli(sistema)
 
 
 if __name__ == "__main__":

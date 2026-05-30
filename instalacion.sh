@@ -96,20 +96,20 @@ instalar_python() {
     case "$GESTOR" in
         apt)
             sudo apt-get update -y
-            sudo apt-get install -y python3 python3-venv python3-pip
+            sudo apt-get install -y python3 python3-venv python3-pip python3-tk xauth
             ;;
         dnf)
-            sudo dnf install -y python3 python3-pip
+            sudo dnf install -y python3 python3-pip python3-tkinter xauth
             ;;
         pacman)
-            sudo pacman -Sy --noconfirm python python-pip
+            sudo pacman -Sy --noconfirm python python-pip tk xorg-xauth
             ;;
         zypper)
-            sudo zypper install -y python3 python3-pip
+            sudo zypper install -y python3 python3-pip python3-tk xauth
             ;;
         *)
             error "No se pudo detectar un gestor de paquetes compatible."
-            error "Instala Python ${PYTHON_MIN_MAJOR}.${PYTHON_MIN_MINOR}+ manualmente y vuelve a ejecutar este script."
+            error "Instala Python ${PYTHON_MIN_MAJOR}.${PYTHON_MIN_MINOR}+, Tkinter y xauth manualmente y vuelve a ejecutar este script."
             exit 1
             ;;
     esac
@@ -334,9 +334,22 @@ echo -e "    ${CYAN}${PYTHON_CMD} main.py${RESET}"
 echo ""
 
 # ---------------------------------------------------------------------------
-# 10. Preguntar si desea ejecutar la demo
+# 10. Verificación de X11 Forwarding (para GUI via SSH)
 # ---------------------------------------------------------------------------
-read -rp "¿Deseas ejecutar la demo de AetherOS ahora? [S/n]: " respuesta
+echo ""
+info "Verificando configuración de X11 Forwarding (SSH)..."
+if grep -q "^X11Forwarding yes" /etc/ssh/sshd_config 2>/dev/null; then
+    ok "X11Forwarding está habilitado en sshd_config"
+else
+    warn "X11Forwarding no parece estar habilitado (o comentado) en /etc/ssh/sshd_config"
+    echo -e "  Para ver la GUI desde Windows, asegúrate de que el servidor SSH tenga:"
+    echo -e "  ${NEGRITA}X11Forwarding yes${RESET} en /etc/ssh/sshd_config y reinicia el servicio sshd."
+fi
+
+# ---------------------------------------------------------------------------
+# 11. Preguntar si desea ejecutar la GUI ahora
+# ---------------------------------------------------------------------------
+read -rp "¿Deseas iniciar la GUI de AetherOS ahora? (Asegúrate de estar usando un entorno gráfico o ssh -X) [S/n]: " respuesta
 respuesta="${respuesta:-S}"
 
 if [[ "$respuesta" =~ ^[Ss]$ ]]; then
