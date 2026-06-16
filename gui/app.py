@@ -29,10 +29,10 @@ class AetherOSApp(tk.Tk):
             "icono": "📝",
             "id": "nano",
         },
-        "htop": {
-            "titulo": "htop",
-            "icono": "📊",
-            "id": "htop",
+        "calc": {
+            "titulo": "Calculadora",
+            "icono": "🧮",
+            "id": "calc",
         },
     }
 
@@ -160,8 +160,8 @@ class AetherOSApp(tk.Tk):
         # Determinar el comando de apertura
         if nombre_paquete == "nano":
             comando = self.abrir_nano
-        elif nombre_paquete == "htop":
-            comando = self.abrir_htop
+        elif nombre_paquete == "calc":
+            comando = self.abrir_calc
         else:
             return
 
@@ -267,16 +267,14 @@ class AetherOSApp(tk.Tk):
         else:
             self.ventanas_abiertas["nano"].restaurar()
 
-    def abrir_htop(self) -> None:
-        """Abre htop (monitor de procesos instalado via apt)."""
-        from gui.admin_procesos import AdminProcesos
-        if "htop" not in self.ventanas_abiertas:
-            v = AdminProcesos(self, self.sistema.procesos)
-            # Personalizar título para htop
-            v.titulo = "htop — Process Viewer"
-            self._registrar_app("htop", "htop", "📊", v)
+    def abrir_calc(self) -> None:
+        """Abre la calculadora (instalada via apt)."""
+        from gui.calc_app import CalcApp
+        if "calc" not in self.ventanas_abiertas:
+            v = CalcApp(self)
+            self._registrar_app("calc", "Calculadora", "🧮", v)
         else:
-            self.ventanas_abiertas["htop"].restaurar()
+            self.ventanas_abiertas["calc"].restaurar()
 
 
 def lanzar_gui(sistema: SistemaAetherOS) -> None:

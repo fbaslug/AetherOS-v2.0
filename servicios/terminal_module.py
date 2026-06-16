@@ -69,11 +69,11 @@ class _ShellSimulado:
             "desc": "small, friendly text editor",
             "icono": "📝",
         },
-        "htop": {
-            "version": "3.2.2-2",
-            "size_kb": 172,
-            "desc": "interactive process viewer",
-            "icono": "📊",
+        "calc": {
+            "version": "1.0-1",
+            "size_kb": 120,
+            "desc": "simple calculator utility",
+            "icono": "🧮",
         },
     }
 
@@ -621,7 +621,7 @@ class _ShellSimulado:
             "    sudo apt install <paquete>    Instalar programa\n"
             "    sudo apt remove <paquete>     Desinstalar programa\n"
             "    apt list --installed           Ver programas instalados\n\n"
-            "\033[1;33m  Paquetes disponibles:\033[0m nano, htop\n\n"
+            "\033[1;33m  Paquetes disponibles:\033[0m nano, calc\n\n"
             "    exit             Cerrar terminal\n"
         )
         self._buffer.put(ayuda)

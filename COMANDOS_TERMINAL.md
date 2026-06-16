@@ -109,14 +109,14 @@ sudo apt install nano
   - `Ctrl+K` — Cortar línea
   - `Ctrl+Z` — Deshacer
 
-### Instalar htop (Monitor de Procesos)
+### Instalar calc (Calculadora)
 
 ```bash
-sudo apt install htop
+sudo apt install calc
 ```
 
-- **Icono en escritorio:** 📊
-- **Descripción:** Visor interactivo de procesos del sistema con PID, estado, prioridad y operaciones de E/S
+- **Icono en escritorio:** 🧮
+- **Descripción:** Calculadora interactiva con operaciones matemáticas básicas.
 
 ---
 
@@ -139,10 +139,10 @@ La terminal mostrará la animación de desinstalación. Al finalizar:
 sudo apt remove nano
 ```
 
-### Desinstalar htop
+### Desinstalar calc
 
 ```bash
-sudo apt remove htop
+sudo apt remove calc
 ```
 
 ---
