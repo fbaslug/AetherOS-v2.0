@@ -18,6 +18,7 @@ class Escritorio(tk.Frame):
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, bg=tema.FONDO_PRINCIPAL)
         self._iconos: list[tk.Frame] = []
+        self._iconos_por_nombre: dict[str, tk.Frame] = {}
         self._row = 0
         self._col = 0
 
@@ -81,8 +82,20 @@ class Escritorio(tk.Frame):
 
         contenedor.place(x=x_pos, y=y_pos)
 
+        # Registrar referencia por nombre
+        self._iconos_por_nombre[titulo] = contenedor
+
         # Avanzar columna/fila (máximo 1 fila vertical por ahora, fluye hacia abajo)
         self._row += 1
         if self._row > 6:
             self._row = 0
             self._col += 1
+
+    def quitar_icono(self, titulo: str) -> None:
+        """Elimina un icono del escritorio por su título."""
+        if titulo in self._iconos_por_nombre:
+            widget = self._iconos_por_nombre.pop(titulo)
+            widget.destroy()
+            # También quitarlo de la lista general
+            if widget in self._iconos:
+                self._iconos.remove(widget)

@@ -22,7 +22,7 @@ class GestorDispositivos(VentanaInterna):
             titulo="Gestor de Dispositivos",
             ancho=800,
             alto=500,
-            icono="🖧"
+            icono="🖥"
         )
         self.controlador = dispositivos
 

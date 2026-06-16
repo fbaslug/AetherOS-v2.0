@@ -18,22 +18,34 @@ from gui.barra_tareas import BarraTareas
 from gui.escritorio import Escritorio
 from gui.pantalla_arranque import PantallaArranque
 
-# Importaciones retrasadas de aplicaciones
-# from gui.explorador_archivos import ExploradorArchivos
-# from gui.admin_procesos import AdminProcesos
-# from gui.monitor_memoria import MonitorMemoria
-# from gui.gestor_dispositivos import GestorDispositivos
-# from gui.terminal_gui import TerminalApp
-
 
 class AetherOSApp(tk.Tk):
     """Ventana principal y controlador del escritorio."""
+
+    # Mapeo de paquetes apt a metadatos de aplicación de escritorio
+    _APP_MAP: dict[str, dict[str, str]] = {
+        "nano": {
+            "titulo": "nano",
+            "icono": "📝",
+            "id": "nano",
+        },
+        "htop": {
+            "titulo": "htop",
+            "icono": "📊",
+            "id": "htop",
+        },
+    }
 
     def __init__(self, sistema: SistemaAetherOS) -> None:
         super().__init__()
         self.sistema = sistema
         self.gestor_archivos = GestorArchivos()
-        self.terminal_backend = TerminalIntegrada()
+
+        # Terminal con callbacks de instalación/desinstalación
+        self.terminal_backend = TerminalIntegrada(
+            on_programa_instalado=self._on_programa_instalado,
+            on_programa_desinstalado=self._on_programa_desinstalado,
+        )
 
         # Configuración de ventana base
         self.title("AetherOS v2.0")
@@ -92,11 +104,11 @@ class AetherOSApp(tk.Tk):
         self.escritorio.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
         self.vista_actual = self.escritorio
 
-        # Agregar iconos
+        # Agregar iconos de aplicaciones del sistema
         self.escritorio.agregar_icono("📁", "Archivos", self.abrir_explorador)
         self.escritorio.agregar_icono("📊", "Procesos", self.abrir_procesos)
         self.escritorio.agregar_icono("💾", "Memoria", self.abrir_memoria)
-        self.escritorio.agregar_icono("🖧", "Dispositivos", self.abrir_dispositivos)
+        self.escritorio.agregar_icono("🖥", "Dispositivos", self.abrir_dispositivos)
         self.escritorio.agregar_icono("⌨️", "Terminal", self.abrir_terminal)
 
         # Iniciar loop de monitorización (cada 1s)
@@ -112,6 +124,75 @@ class AetherOSApp(tk.Tk):
         if self.barra_tareas:
             self.barra_tareas.actualizar_monitor()
         self.after(1000, self._loop_monitor)
+
+    # ------------------------------------------------------------------
+    # Callbacks de Instalación / Desinstalación
+    # ------------------------------------------------------------------
+
+    def _on_programa_instalado(self, nombre_paquete: str) -> None:
+        """Callback invocado cuando se instala un programa via apt.
+
+        Se ejecuta en hilo de temporizador, por lo que usamos
+        ``self.after()`` para operar en el hilo principal de Tkinter.
+        """
+        self.after(0, lambda: self._agregar_app_escritorio(nombre_paquete))
+
+    def _on_programa_desinstalado(self, nombre_paquete: str) -> None:
+        """Callback invocado cuando se desinstala un programa via apt.
+
+        Se ejecuta en hilo de temporizador, por lo que usamos
+        ``self.after()`` para operar en el hilo principal de Tkinter.
+        """
+        self.after(0, lambda: self._quitar_app_escritorio(nombre_paquete))
+
+    def _agregar_app_escritorio(self, nombre_paquete: str) -> None:
+        """Agrega un icono al escritorio para un programa instalado."""
+        app_info = self._APP_MAP.get(nombre_paquete)
+        if not app_info or not self.escritorio:
+            return
+
+        titulo = app_info["titulo"]
+
+        # Verificar que no exista ya
+        if titulo in self.escritorio._iconos_por_nombre:
+            return
+
+        # Determinar el comando de apertura
+        if nombre_paquete == "nano":
+            comando = self.abrir_nano
+        elif nombre_paquete == "htop":
+            comando = self.abrir_htop
+        else:
+            return
+
+        self.escritorio.agregar_icono(
+            app_info["icono"],
+            titulo,
+            comando,
+        )
+
+    def _quitar_app_escritorio(self, nombre_paquete: str) -> None:
+        """Quita el icono del escritorio de un programa desinstalado."""
+        app_info = self._APP_MAP.get(nombre_paquete)
+        if not app_info or not self.escritorio:
+            return
+
+        titulo = app_info["titulo"]
+        id_app = app_info["id"]
+
+        # Quitar icono del escritorio
+        self.escritorio.quitar_icono(titulo)
+
+        # Cerrar la ventana si está abierta
+        if id_app in self.ventanas_abiertas:
+            try:
+                self.ventanas_abiertas[id_app].cerrar()
+            except Exception:
+                pass
+            if id_app in self.ventanas_abiertas:
+                del self.ventanas_abiertas[id_app]
+            if self.barra_tareas:
+                self.barra_tareas.quitar_ventana(id_app)
 
     # ------------------------------------------------------------------
     # Lanzadores de Aplicaciones
@@ -165,7 +246,7 @@ class AetherOSApp(tk.Tk):
         from gui.gestor_dispositivos import GestorDispositivos
         if "dispositivos" not in self.ventanas_abiertas:
             v = GestorDispositivos(self, self.sistema.dispositivos)
-            self._registrar_app("dispositivos", "Dispositivos", "🖧", v)
+            self._registrar_app("dispositivos", "Dispositivos", "🖥", v)
         else:
             self.ventanas_abiertas["dispositivos"].restaurar()
 
@@ -176,6 +257,26 @@ class AetherOSApp(tk.Tk):
             self._registrar_app("terminal", "Terminal", "⌨️", v)
         else:
             self.ventanas_abiertas["terminal"].restaurar()
+
+    def abrir_nano(self) -> None:
+        """Abre el editor de texto nano (instalado via apt)."""
+        from gui.nano_app import NanoApp
+        if "nano" not in self.ventanas_abiertas:
+            v = NanoApp(self)
+            self._registrar_app("nano", "nano", "📝", v)
+        else:
+            self.ventanas_abiertas["nano"].restaurar()
+
+    def abrir_htop(self) -> None:
+        """Abre htop (monitor de procesos instalado via apt)."""
+        from gui.admin_procesos import AdminProcesos
+        if "htop" not in self.ventanas_abiertas:
+            v = AdminProcesos(self, self.sistema.procesos)
+            # Personalizar título para htop
+            v.titulo = "htop — Process Viewer"
+            self._registrar_app("htop", "htop", "📊", v)
+        else:
+            self.ventanas_abiertas["htop"].restaurar()
 
 
 def lanzar_gui(sistema: SistemaAetherOS) -> None:
