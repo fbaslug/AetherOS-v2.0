@@ -997,8 +997,8 @@ class TerminalIntegrada:
         self._proceso: Optional[subprocess.Popen[bytes]] = None
         self._activa: bool = False
 
-        # Modo simulado para plataformas sin PTY
-        self._modo_simulado: bool = not _ES_LINUX
+        # Forzar modo simulado para que la integración con la GUI (iconos de apt) funcione siempre
+        self._modo_simulado: bool = True
         self._shell_simulado: Optional[_ShellSimulado] = None
 
         # Callbacks
