@@ -17,10 +17,8 @@ class Escritorio(tk.Frame):
 
     def __init__(self, parent: tk.Widget) -> None:
         super().__init__(parent, bg=tema.FONDO_PRINCIPAL)
-        self._iconos: list[tk.Frame] = []
+        self._iconos_activos: list[tk.Frame] = []
         self._iconos_por_nombre: dict[str, tk.Frame] = {}
-        self._row = 0
-        self._col = 0
 
     def agregar_icono(self, icono: str, titulo: str, comando: Callable[[], None]) -> None:
         """Agrega un icono clickeable al escritorio.
@@ -74,28 +72,32 @@ class Escritorio(tk.Frame):
             widget.bind("<Leave>", _on_leave)
             widget.bind("<Button-1>", lambda e: comando())
 
-        # Calcular posición en la cuadrícula (columnas de 100px)
-        x_pad = 20
-        y_pad = 20
-        x_pos = x_pad + (self._col * 110)
-        y_pos = y_pad + (self._row * 120)
-
-        contenedor.place(x=x_pos, y=y_pos)
-
-        # Registrar referencia por nombre
+        # Registrar en las colecciones
+        self._iconos_activos.append(contenedor)
         self._iconos_por_nombre[titulo] = contenedor
 
-        # Avanzar columna/fila (máximo 1 fila vertical por ahora, fluye hacia abajo)
-        self._row += 1
-        if self._row > 6:
-            self._row = 0
-            self._col += 1
+        # Actualizar posiciones
+        self._recalcular_layout()
 
     def quitar_icono(self, titulo: str) -> None:
         """Elimina un icono del escritorio por su título."""
         if titulo in self._iconos_por_nombre:
             widget = self._iconos_por_nombre.pop(titulo)
+            if widget in self._iconos_activos:
+                self._iconos_activos.remove(widget)
             widget.destroy()
-            # También quitarlo de la lista general
-            if widget in self._iconos:
-                self._iconos.remove(widget)
+            self._recalcular_layout()
+
+    def _recalcular_layout(self) -> None:
+        """Recalcula y aplica las posiciones de todos los iconos."""
+        # Límite de iconos por columna antes de pasar a la siguiente (5 iconos por columna)
+        max_por_columna = 5
+        
+        for idx, widget in enumerate(self._iconos_activos):
+            col = idx // max_por_columna
+            row = idx % max_por_columna
+            
+            x_pos = 20 + (col * 110)
+            y_pos = 20 + (row * 120)
+            
+            widget.place(x=x_pos, y=y_pos)
